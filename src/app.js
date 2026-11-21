@@ -4,7 +4,7 @@ require("dotenv").config();
 const PORT = process.env.PORT || 5000;
 
 const express = require("express");
-const { sendWhatsAppMessage } = require("./services/whatsapp.service");
+import { handleIncomingMessage } from "./services/bot.service.js";
 
 const app = express();
 
@@ -55,10 +55,7 @@ async function processWebhook(body) {
           message: customerMessage,
         });
 
-        await sendWhatsAppMessage(
-          customerNumber,
-          `Hello! Thanks for contacting Nived. We received your message: "${customerMessage}". How can we help you?`
-        );
+        await handleIncomingMessage(from, message);
       }
     }
   }
