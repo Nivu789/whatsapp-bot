@@ -1,6 +1,12 @@
-
 const gym = require("../config/gym");
 const { sendWhatsAppMessage } = require("./whatsapp.service");
+const Lead = require("../models/lead.model");
+
+const {
+  getConversation,
+  setConversation,
+  clearConversation,
+} = require("./conversation.service");
 
 const menu = `Hi! Welcome to ${gym.name} 💪
 
@@ -15,18 +21,93 @@ How can we help you today?
 Reply with a number to continue.`;
 
 const handleIncomingMessage = async (from, message) => {
-  const input = message.trim().toLowerCase();
+  const input = message.trim();
+
+  if (!input) {
+    await sendWhatsAppMessage(from, "Please enter a message.");
+    return;
+  }
+
+  const normalizedInput = input.toLowerCase();
+
+  // Allow customers to return to the main menu anytime.
+  if (["menu", "hi", "hello", "hey"].includes(normalizedInput)) {
+    clearConversation(from);
+    await sendWhatsAppMessage(from, menu);
+    return;
+  }
+
+  // Check whether the customer is already in a conversation.
+  const conversation = getConversation(from);
+
+  if (conversation) {
+    switch (conversation.step) {
+      case "name":
+        setConversation(from, {
+          ...conversation,
+          name: input,
+          step: "date",
+        });
+
+        await sendWhatsAppMessage(
+          from,
+          `Nice to meet you, ${input}! 😊\n\nWhat date would you prefer for your free trial?`
+        );
+        return;
+
+      case "date":
+        setConversation(from, {
+          ...conversation,
+          trialDate: input,
+          step: "time",
+        });
+
+        await sendWhatsAppMessage(
+          from,
+          "What time would you prefer for your free trial?"
+        );
+        return;
+
+      case "time":
+        try {
+          const lead = await Lead.create({
+            name: conversation.name,
+            phone: from,
+            trialDate: conversation.trialDate,
+            trialTime: input,
+          });
+
+          clearConversation(from);
+
+          await sendWhatsAppMessage(
+            from,
+            `🎉 Thank you, ${lead.name}!
+
+Your free trial request has been received.
+
+📅 Date: ${lead.trialDate}
+⏰ Time: ${lead.trialTime}
+
+Our team will contact you shortly!
+
+Reply MENU to explore more services.`
+          );
+        } catch (error) {
+          console.error("Lead creation failed:", error.message);
+
+          await sendWhatsAppMessage(
+            from,
+            "Sorry, we couldn't save your booking right now. Please try again in a moment."
+          );
+        }
+
+        return;
+    }
+  }
 
   let reply = "";
 
-  switch (input) {
-    case "hi":
-    case "hello":
-    case "hey":
-    case "menu":
-      reply = menu;
-      break;
-
+  switch (normalizedInput) {
     case "1":
       reply = `💪 Membership Plans
 
@@ -71,11 +152,15 @@ Reply MENU to go back.`;
       break;
 
     case "5":
+      setConversation(from, {
+        step: "name",
+      });
+
       reply = `🎉 Great choice!
 
 We'd love to arrange a free trial session.
 
-Please reply with your name to get started.`;
+What is your name?`;
       break;
 
     default:

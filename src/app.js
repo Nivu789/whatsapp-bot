@@ -1,6 +1,8 @@
 
 require("dotenv").config();
 
+const connectDB = require("./config/database");
+
 const express = require("express");
 const { handleIncomingMessage } = require("./services/bot.service");
 
@@ -61,6 +63,8 @@ async function processWebhook(body) {
   }
 }
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on ${PORT}`);
+connectDB().then(() => {
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 });
