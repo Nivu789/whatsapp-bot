@@ -1,12 +1,12 @@
 
 require("dotenv").config();
 
-const PORT = process.env.PORT || 5000;
-
 const express = require("express");
-import { handleIncomingMessage } from "./services/bot.service.js";
+const { handleIncomingMessage } = require("./services/bot.service");
 
 const app = express();
+
+const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
 
@@ -29,12 +29,10 @@ app.get("/webhook", (req, res) => {
 
 // 2. Receive incoming WhatsApp events
 app.post("/webhook", (req, res) => {
-  // Acknowledge Meta immediately
   res.sendStatus(200);
 
-  // Process the event after acknowledging it
   processWebhook(req.body).catch((error) => {
-    console.error("Webhook processing error:", error.message);
+    console.error("Webhook processing error:", error);
   });
 });
 
@@ -43,7 +41,6 @@ async function processWebhook(body) {
     for (const change of entry.changes || []) {
       const value = change.value;
 
-      // Ignore delivery/read status notifications
       for (const message of value.messages || []) {
         if (message.type !== "text") continue;
 
@@ -55,7 +52,10 @@ async function processWebhook(body) {
           message: customerMessage,
         });
 
-        await handleIncomingMessage(from, message);
+        await handleIncomingMessage(
+          customerNumber,
+          customerMessage
+        );
       }
     }
   }

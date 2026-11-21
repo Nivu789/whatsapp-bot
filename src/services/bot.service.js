@@ -1,6 +1,6 @@
 
-import gym from "../config/gym.js";
-import { sendWhatsAppMessage } from "./whatsapp.service.js";
+const gym = require("../config/gym");
+const { sendWhatsAppMessage } = require("./whatsapp.service");
 
 const menu = `Hi! Welcome to ${gym.name} 💪
 

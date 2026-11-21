@@ -34,4 +34,4 @@ const gym = {
   ],
 };
 
-export default gym;
+module.exports = gym;
