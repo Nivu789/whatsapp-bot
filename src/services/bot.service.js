@@ -14,7 +14,7 @@ How can we help you today?
 
 Reply with a number to continue.`;
 
-export const handleIncomingMessage = async (from, message) => {
+const handleIncomingMessage = async (from, message) => {
   const input = message.trim().toLowerCase();
 
   let reply = "";
@@ -86,3 +86,5 @@ Please reply with a number from 1 to 5, or type MENU.`;
 
   await sendWhatsAppMessage(from, reply);
 };
+
+module.exports = { handleIncomingMessage };
