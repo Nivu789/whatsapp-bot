@@ -38,20 +38,36 @@ app.post("/webhook", (req, res) => {
   });
 });
 
+
 async function processWebhook(body) {
   for (const entry of body.entry || []) {
     for (const change of entry.changes || []) {
       const value = change.value;
 
       for (const message of value.messages || []) {
-        if (message.type !== "text") continue;
+        let customerMessage = "";
+
+        if (message.type === "text") {
+          customerMessage = message.text.body;
+        } else if (
+          message.type === "interactive" &&
+          message.interactive?.type === "button_reply"
+        ) {
+          customerMessage = message.interactive.button_reply.id;
+        } else if (
+          message.type === "interactive" &&
+          message.interactive?.type === "list_reply"
+        ) {
+          customerMessage = message.interactive.list_reply.id;
+        } else {
+          continue;
+        }
 
         const customerNumber = message.from;
-        const customerMessage = message.text.body;
 
-        console.log("Incoming message:", {
+        console.log("Incoming WhatsApp message:", {
           from: customerNumber,
-          message: customerMessage,
+          type: message.type,
         });
 
         await handleIncomingMessage(
@@ -62,6 +78,7 @@ async function processWebhook(body) {
     }
   }
 }
+
 
 connectDB().then(() => {
   app.listen(PORT, "0.0.0.0", () => {

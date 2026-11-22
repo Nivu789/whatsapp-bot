@@ -1,5 +1,8 @@
 const gym = require("../config/gym");
-const { sendWhatsAppMessage } = require("./whatsapp.service");
+const {
+    sendWhatsAppMessage,
+    sendWhatsAppButtons,
+} = require("./whatsapp.service");
 const Lead = require("../models/lead.model");
 
 const {
@@ -7,6 +10,23 @@ const {
     setConversation,
     clearConversation,
 } = require("./conversation.service");
+
+
+
+const sendMainMenu = async (from) => {
+    await sendWhatsAppButtons(
+        from,
+        "Welcome to FitZone! 💪\n\nWhat would you like to explore?\n\nYou can also reply 3 for gym timings or 4 for location.",
+        [
+            { id: "MEMBERSHIP", title: "Membership Plans" },
+            { id: "PERSONAL_TRAINING", title: "Personal Training" },
+            { id: "FREE_TRIAL", title: "Book Free Trial" },
+        ],
+        "FitZone Fitness 💪",
+        "Choose an option"
+    );
+};
+
 
 const menu = `Hi! Welcome to ${gym.name} 💪
 
@@ -33,8 +53,18 @@ const handleIncomingMessage = async (from, message) => {
     // Allow customers to return to the main menu anytime.
     if (["menu", "hi", "hello", "hey"].includes(normalizedInput)) {
         clearConversation(from);
-        await sendWhatsAppMessage(from, menu);
+        await sendMainMenu(from);
         return;
+    }
+
+    const buttonActions = [
+        "membership",
+        "personal_training",
+        "free_trial",
+    ];
+
+    if (buttonActions.includes(normalizedInput)) {
+        clearConversation(from);
     }
 
     // Check whether the customer is already in a conversation.
@@ -138,7 +168,7 @@ Reply MENU to explore more services.`
     let reply = "";
 
     switch (normalizedInput) {
-        case "1":
+        case "membership":
             reply = `💪 Membership Plans
 
 ${gym.membership
@@ -148,7 +178,7 @@ ${gym.membership
 Reply MENU to go back.`;
             break;
 
-        case "2":
+        case "personal_training":
             reply = `🏋️ Personal Training
 
 Our services include:
@@ -181,7 +211,7 @@ Contact: ${gym.contact}
 Reply MENU to go back.`;
             break;
 
-        case "5":
+        case "free_trial":
             setConversation(from, {
                 step: "name",
             });
