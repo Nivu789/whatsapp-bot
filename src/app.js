@@ -64,6 +64,9 @@ async function processWebhook(body) {
           message.interactive?.type === "list_reply"
         ) {
           customerMessage = message.interactive.list_reply.id;
+        } else if (message.type === "button") {
+          customerMessage =
+            message.button.payload || message.button.text;
         }
         else {
           continue;

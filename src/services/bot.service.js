@@ -3,6 +3,7 @@ const {
     sendWhatsAppMessage,
     sendWhatsAppButtons,
     sendWhatsAppList,
+    sendWhatsAppCarousel,
 } = require("./whatsapp.service");
 const Lead = require("../models/lead.model");
 
@@ -12,16 +13,18 @@ const {
     clearConversation,
 } = require("./conversation.service");
 
+const { validateTrialDate, validateTrialTime, } = require("./validation.service");
+
 
 
 const sendMainMenu = async (from) => {
     await sendWhatsAppButtons(
         from,
-        "Welcome to FitZone! 💪\n\nWhat would you like to explore?\n\nYou can also reply 3 for gym timings or 4 for location.",
+        "Welcome to FitZone! 💪\n\nWhat would you like to explore?\n\n✨ Type EXPLORE to view our interactive fitness carousel.\n📋 Type MORE for gym information."
         [
-            { id: "MEMBERSHIP", title: "Membership Plans" },
-            { id: "PERSONAL_TRAINING", title: "Personal Training" },
-            { id: "FREE_TRIAL", title: "Book Free Trial" },
+        { id: "MEMBERSHIP", title: "Membership Plans" },
+        { id: "PERSONAL_TRAINING", title: "Personal Training" },
+        { id: "FREE_TRIAL", title: "Book Free Trial" },
         ],
         "FitZone Fitness 💪",
         "Choose an option"
@@ -91,6 +94,13 @@ const handleIncomingMessage = async (from, message) => {
         return;
     }
 
+    if (["explore", "carousel"].includes(normalizedInput)) {
+        clearConversation(from);
+
+        await sendWhatsAppCarousel(from);
+        return;
+    }
+
     const buttonActions = [
         "membership",
         "personal_training",
@@ -119,24 +129,45 @@ const handleIncomingMessage = async (from, message) => {
 
                 await sendWhatsAppMessage(
                     from,
-                    `Nice to meet you, ${input}! 😊\n\nWhat date would you prefer for your free trial?`
+                    `Nice to meet you, ${input}! 😊\n\nWhat date would you prefer for your free trial?\n\nPlease enter YYYY-MM-DD.\nExample: 2026-11-25`
                 );
                 return;
 
-            case "date":
+
+            case "date": {
+                const validation = validateTrialDate(input);
+
+                if (!validation.valid) {
+                    await sendWhatsAppMessage(from, validation.message);
+                    return;
+                }
+
                 setConversation(from, {
                     ...conversation,
-                    trialDate: input,
+                    trialDate: validation.value,
                     step: "time",
                 });
 
                 await sendWhatsAppMessage(
                     from,
-                    "What time would you prefer for your free trial?"
+                    "Great! ⏰ What time would you prefer?\n\nPlease enter the time in HH:MM format (24-hour clock).\nExample: 17:30"
                 );
+
                 return;
+            }
+
 
             case "time":
+                const validation = validateTrialTime(
+                    input,
+                    conversation.trialDate
+                );
+
+                if (!validation.valid) {
+                    await sendWhatsAppMessage(from, validation.message);
+                    return;
+                }
+                
                 try {
                     // 1. Save booking in MongoDB
                     const lead = await Lead.create({
