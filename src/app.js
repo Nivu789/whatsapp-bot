@@ -59,7 +59,13 @@ async function processWebhook(body) {
           message.interactive?.type === "list_reply"
         ) {
           customerMessage = message.interactive.list_reply.id;
-        } else {
+        } else if (
+          message.type === "interactive" &&
+          message.interactive?.type === "list_reply"
+        ) {
+          customerMessage = message.interactive.list_reply.id;
+        }
+        else {
           continue;
         }
 

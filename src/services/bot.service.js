@@ -2,6 +2,7 @@ const gym = require("../config/gym");
 const {
     sendWhatsAppMessage,
     sendWhatsAppButtons,
+    sendWhatsAppList,
 } = require("./whatsapp.service");
 const Lead = require("../models/lead.model");
 
@@ -28,17 +29,44 @@ const sendMainMenu = async (from) => {
 };
 
 
-const menu = `Hi! Welcome to ${gym.name} 💪
+const sendInformationList = async (from) => {
+    await sendWhatsAppList(
+        from,
+        "What information would you like to know about FitZone?",
+        [
+            {
+                title: "Gym Information",
+                rows: [
+                    {
+                        id: "GYM_TIMINGS",
+                        title: "Gym Timings",
+                        description: "Check our opening hours",
+                    },
+                    {
+                        id: "GYM_LOCATION",
+                        title: "Gym Location",
+                        description: "Find where we are located",
+                    },
+                    {
+                        id: "GYM_CONTACT",
+                        title: "Contact Details",
+                        description: "Get our contact number",
+                    },
+                    {
+                        id: "GYM_FAQ",
+                        title: "Common Questions",
+                        description: "Get answers to gym FAQs",
+                    },
+                ],
+            },
+        ],
+        "View Information",
+        "FitZone Fitness 💪",
+        "We're happy to help!"
+    );
+};
 
-How can we help you today?
 
-1️⃣ Membership plans
-2️⃣ Personal training
-3️⃣ Gym timings
-4️⃣ Gym location
-5️⃣ Book a free trial
-
-Reply with a number to continue.`;
 
 const handleIncomingMessage = async (from, message) => {
     const input = message.trim();
@@ -57,10 +85,20 @@ const handleIncomingMessage = async (from, message) => {
         return;
     }
 
+    if (["more", "more info", "information"].includes(normalizedInput)) {
+        clearConversation(from);
+        await sendInformationList(from);
+        return;
+    }
+
     const buttonActions = [
         "membership",
         "personal_training",
         "free_trial",
+        "gym_timings",
+        "gym_location",
+        "gym_contact",
+        "gym_faq",
     ];
 
     if (buttonActions.includes(normalizedInput)) {
@@ -169,6 +207,7 @@ Reply MENU to explore more services.`
 
     switch (normalizedInput) {
         case "membership":
+        case "1":
             reply = `💪 Membership Plans
 
 ${gym.membership
@@ -179,6 +218,7 @@ Reply MENU to go back.`;
             break;
 
         case "personal_training":
+        case "2":
             reply = `🏋️ Personal Training
 
 Our services include:
@@ -212,6 +252,7 @@ Reply MENU to go back.`;
             break;
 
         case "free_trial":
+        case "5":
             setConversation(from, {
                 step: "name",
             });
@@ -223,10 +264,45 @@ We'd love to arrange a free trial session.
 What is your name?`;
             break;
 
+        case "gym_timings":
+            reply = `⏰ Gym Timings
+
+Monday - Saturday:
+${gym.timings.weekdays}
+
+Sunday:
+${gym.timings.sunday}`;
+            break;
+
+        case "gym_location":
+            reply = `📍 Our Location
+
+${gym.location}`;
+            break;
+
+        case "gym_contact":
+            reply = `📞 Contact FitZone
+
+${gym.contact}`;
+            break;
+
+        case "gym_faq":
+            reply = `❓ Frequently Asked Questions
+
+1. What are your gym timings?
+${gym.timings.weekdays}
+
+2. Do you offer personal training?
+Yes! We offer personal training.
+
+3. Can I book a free trial?
+Yes! Type MENU to book one.`;
+            break;
+
         default:
             reply = `Sorry, I didn't understand that.
 
-Please reply with a number from 1 to 5, or type MENU.`;
+Type MENU to see the main options or MORE to explore additional information.`;
     }
 
     await sendWhatsAppMessage(from, reply);

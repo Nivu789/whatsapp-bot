@@ -92,7 +92,57 @@ const sendWhatsAppButtons = async (
   return response.data;
 };
 
+
+
+const sendWhatsAppList = async (
+  to,
+  bodyText,
+  sections,
+  buttonText = "View Options",
+  headerText = "Gym Information",
+  footerText = "Choose an option"
+) => {
+  const url = `https://graph.facebook.com/${process.env.GRAPH_API_VERSION}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+
+  const response = await axios.post(
+    url,
+    {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to,
+      type: "interactive",
+      interactive: {
+        type: "list",
+        header: {
+          type: "text",
+          text: headerText,
+        },
+        body: {
+          text: bodyText,
+        },
+        footer: {
+          text: footerText,
+        },
+        action: {
+          button: buttonText,
+          sections,
+        },
+      },
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response.data;
+};
+
+
 module.exports = {
   sendWhatsAppMessage,
   sendWhatsAppButtons,
+  sendWhatsAppList,
 };
