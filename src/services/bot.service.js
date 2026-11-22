@@ -20,11 +20,11 @@ const { validateTrialDate, validateTrialTime, } = require("./validation.service"
 const sendMainMenu = async (from) => {
     await sendWhatsAppButtons(
         from,
-        "Welcome to FitZone! 💪\n\nWhat would you like to explore?\n\n✨ Type EXPLORE to view our interactive fitness carousel.\n📋 Type MORE for gym information."
+        "Welcome to FitZone! 💪\n\nWhat would you like to explore?\n\n✨ Type EXPLORE to view our interactive fitness carousel.\n📋 Type MORE for gym information.",
         [
-        { id: "MEMBERSHIP", title: "Membership Plans" },
-        { id: "PERSONAL_TRAINING", title: "Personal Training" },
-        { id: "FREE_TRIAL", title: "Book Free Trial" },
+            { id: "MEMBERSHIP", title: "Membership Plans" },
+            { id: "PERSONAL_TRAINING", title: "Personal Training" },
+            { id: "FREE_TRIAL", title: "Book Free Trial" },
         ],
         "FitZone Fitness 💪",
         "Choose an option"
@@ -94,10 +94,18 @@ const handleIncomingMessage = async (from, message) => {
         return;
     }
 
-    if (["explore", "carousel"].includes(normalizedInput)) {
-        clearConversation(from);
+    // if (["explore", "carousel"].includes(normalizedInput)) {
+    //     clearConversation(from);
 
-        await sendWhatsAppCarousel(from);
+    //     await sendWhatsAppCarousel(from);
+    //     return;
+    // }
+
+    if (["explore", "carousel"].includes(normalizedInput)) {
+        await sendWhatsAppMessage(
+            from,
+            "🚧 Our interactive fitness carousel is coming soon! Type MENU to explore our services."
+        );
         return;
     }
 
@@ -121,6 +129,17 @@ const handleIncomingMessage = async (from, message) => {
     if (conversation) {
         switch (conversation.step) {
             case "name":
+                if (
+                    input.length < 2 ||
+                    input.length > 60 ||
+                    !/^[\p{L}\p{M} .'-]+$/u.test(input)
+                ) {
+                    await sendWhatsAppMessage(
+                        from,
+                        "Please enter a valid name (2–60 characters, using letters)."
+                    );
+                    return;
+                }
                 setConversation(from, {
                     ...conversation,
                     name: input,
@@ -157,7 +176,7 @@ const handleIncomingMessage = async (from, message) => {
             }
 
 
-            case "time":
+            case "time": {
                 const validation = validateTrialTime(
                     input,
                     conversation.trialDate
@@ -167,14 +186,14 @@ const handleIncomingMessage = async (from, message) => {
                     await sendWhatsAppMessage(from, validation.message);
                     return;
                 }
-                
+
                 try {
                     // 1. Save booking in MongoDB
                     const lead = await Lead.create({
                         name: conversation.name,
                         phone: from,
                         trialDate: conversation.trialDate,
-                        trialTime: input,
+                        trialTime: validation.value,
                     });
 
                     clearConversation(from);
@@ -231,6 +250,7 @@ Reply MENU to explore more services.`
                 }
 
                 return;
+            }
         }
     }
 
