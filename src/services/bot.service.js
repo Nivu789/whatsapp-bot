@@ -94,20 +94,20 @@ const handleIncomingMessage = async (from, message) => {
         return;
     }
 
-    // if (["explore", "carousel"].includes(normalizedInput)) {
-    //     clearConversation(from);
-
-    //     await sendWhatsAppCarousel(from);
-    //     return;
-    // }
-
     if (["explore", "carousel"].includes(normalizedInput)) {
-        await sendWhatsAppMessage(
-            from,
-            "🚧 Our interactive fitness carousel is coming soon! Type MENU to explore our services."
-        );
+        clearConversation(from);
+
+        await sendWhatsAppCarousel(from);
         return;
     }
+
+    // if (["explore", "carousel"].includes(normalizedInput)) {
+    //     await sendWhatsAppMessage(
+    //         from,
+    //         "🚧 Our interactive fitness carousel is coming soon! Type MENU to explore our services."
+    //     );
+    //     return;
+    // }
 
     const buttonActions = [
         "membership",
