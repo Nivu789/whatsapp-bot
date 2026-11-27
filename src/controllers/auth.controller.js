@@ -1,10 +1,13 @@
 const { loginAdmin } = require("../services/auth.service");
 
+const isProduction =
+    process.env.NODE_ENV === "production";
+
 const cookieOptions = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax",
-  path: "/",
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
 };
 
 const login = async (req, res, next) => {
