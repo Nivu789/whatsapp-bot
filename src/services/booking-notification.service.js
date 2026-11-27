@@ -20,22 +20,48 @@ const formatTrialDate = (date) => {
 };
 
 const formatTrialTime = (time) => {
-    const [hours, minutes] = time.split(":").map(Number);
-
-    if (
-        !/^\d{2}:\d{2}$/.test(time) ||
-        hours < 0 ||
-        hours > 23 ||
-        minutes < 0 ||
-        minutes > 59
-    ) {
+    if (typeof time !== "string") {
         throw new Error("Invalid trial time.");
     }
 
-    const period = hours >= 12 ? "PM" : "AM";
+    const value = time.trim().toUpperCase();
+
+    const match = value.match(
+        /^(\d{1,2}):(\d{2})(?:\s*(AM|PM))?$/
+    );
+
+    if (!match) {
+        throw new Error(`Invalid trial time: ${value}`);
+    }
+
+    let hours = Number(match[1]);
+    const minutes = Number(match[2]);
+    const period = match[3];
+
+    if (minutes < 0 || minutes > 59) {
+        throw new Error("Invalid trial minutes.");
+    }
+
+    // Convert 12-hour format to 24-hour format
+    if (period) {
+        if (hours < 1 || hours > 12) {
+            throw new Error("Invalid trial hours.");
+        }
+
+        hours = hours % 12;
+
+        if (period === "PM") {
+            hours += 12;
+        }
+    } else if (hours < 0 || hours > 23) {
+        throw new Error("Invalid trial hours.");
+    }
+
+    // Convert to display format
+    const formattedPeriod = hours >= 12 ? "PM" : "AM";
     const formattedHours = hours % 12 || 12;
 
-    return `${formattedHours}:${String(minutes).padStart(2, "0")} ${period}`;
+    return `${formattedHours}:${String(minutes).padStart(2, "0")} ${formattedPeriod}`;
 };
 
 const getTemplateName = (status) => {
